@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>高仿版知乎呢</title>
+		<link href="css/mui.min.css" rel="stylesheet" />
+	</head>
+	<body>
+		<!-- <h4>1234567890</h4> -->
+		<!-- 主界面移动、菜单不动 -->
+		<div class="mui-off-canvas-wrap mui-draggable">
+			<!-- 菜单容器 -->
+			<aside class="mui-off-canvas-left" id="offCanvasSide">
+				<div class="mui-scroll-wrapper">
+					<div class="mui-scroll">
+						<!-- 菜单具体展示内容 -->
+						<ul class="mui-table-view">
+							<li class="mui-table-view-cell">
+								<a class="mui-navigate-right">
+									请登录
+								</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</aside>
+			<!-- 主页面容器 -->
+			<div class="mui-inner-wrap">
+				<!-- 主页面标题 -->
+				<header class="mui-bar mui-bar-nav">
+					<a class="mui-icon mui-action-menu mui-icon-bars mui-pull-left" href="#offCanvasSide"></a>
+					<h1 class="mui-title">知乎日报</h1>
+				</header>
+				<nav class="mui-bar mui-bar-tab">
+					<a class="mui-tab-item mui-active">
+						<span class="mui-icon mui-icon-home"></span>
+						<span class="mui-tab-label">首页</span>
+					</a>
+					<a class="mui-tab-item">
+						<span class="mui-icon mui-icon-phone"></span>
+						<span class="mui-tab-label">今日热闻</span>
+					</a>
+					<a class="mui-tab-item">
+						<span class="mui-icon mui-icon-email"></span>
+						<span class="mui-tab-label">往事重提</span>
+					</a>
+					<a class="mui-tab-item">
+						<span class="mui-icon mui-icon-gear"></span>
+						<span class="mui-tab-label">个人中心</span>
+					</a>
+				</nav>
+				<div class="mui-content mui-scroll-wrapper">
+					<div class="mui-scroll">
+						<!-- 主界面具体展示内容 -->
+						<!-- 使用vue脚本 -->
+						<section id="app">
+							<!-- 主题图片轮播 -->
+							<div id="slider" class="mui-slider">
+								<div id="title_img" class="mui-slider-group mui-slider-loop"></div>
+								<div id="title_img_status" class="mui-slider-indicator"></div>
+							</div>
+							<!-- 今日热闻 -->
+							<span style="margin-left: 10px;">{{msg}}</span>
+
+							<!-- 图文列表 -->
+							<ul id="table-list-content" class="mui-table-view"></ul>
+						</section>
+					</div>
+				</div>
+				<div class="mui-off-canvas-backdrop"></div>
+			</div>
+		</div>
+
+
+
+
+
+
+		<!-- 引入脚本 -->
+		<script src="js/mui.min.js"></script>
+		<!-- 引入Vue.js -->
+		<script src="https://cdn.bootcss.com/vue/2.5.17/vue.min.js"></script>
+		<script>
+			var vm = new Vue({
+				el: "#app",
+				data: {
+					msg: "今日热闻"
+				},
+				methods: {
+					top_data: function() {
+						fetch("https://news-at.zhihu.com/api/4/news/latest", {
+							method: "get"
+						}).then(function(res) {
+							res.json().then(function(data) {
+								var imgHtml = "";
+								var imgIndex = "";
+								var index_img_src = data.stories[0].images[0];
+
+								mui.each(data.top_stories, function(index, obj) {
+
+									if (index == 0) {
+										imgHtml += "<div class='mui-slider-item mui-slider-item-duplicate'>";
+										imgHtml += "<a href='#'>";
+										imgHtml += "<img src='" + index_img_src + "'>";
+										imgHtml += "</a>";
+										imgHtml += "</div>";
+
+										//图片标志的地方
+										imgIndex += "<div class='mui-indicator mui-active'></div>";
+
+									} else if ((index + 1) == data.stories.length) {
+										imgHtml += "<div class='mui-slider-item mui-slider-item-duplicate'>";
+										imgHtml += "<a href='#'>";
+										imgHtml += "<img  src='" + index_img_src + "'>";
+										imgHtml += "</a>";
+										imgHtml += "</div>";
+
+									} else {
+										imgHtml += "<div class='mui-slider-item'>";
+										imgHtml += "<a href='detail.html?id=" + obj.id + "'>";
+										imgHtml += "<img src='" + obj.image + "' />";
+										imgHtml += "<div style='position: absolute;top: 320px;line-height: 25px;'>";
+										imgHtml += "<p style='margin-top:-80px ;font-size: 25px; color:white;'>&emsp;" + obj.title + "</p>";
+										imgHtml += "</div>";
+										imgHtml += "</div>";
+										imgIndex += "<div class='mui-indicator'></div>";
+									}
+								});
+								document.getElementById("title_img").innerHTML = imgHtml;
+								document.getElementById("title_img_status").innerHTML = imgIndex;
+
+								var gallery = mui('.mui-slider');
+								gallery.slider({
+									interval: 1000
+								});
+
+							})
+						});
+					},
+					middle_data: function() {
+
+						fetch("https://news-at.zhihu.com/api/3/news/hot", {
+							methods: "get"
+						}).then(function(res) {
+							res.json().then(function(data) {
+								var html = "";
+								mui.each(data.recent, function(index, obj) {
+
+									html += "<li class='mui-table-view-cell mui-media'>";
+									html += "<a href='detail.html?id=" + obj.news_id + "'>";
+									html += "<img class='mui-media-object mui-pull-right' src='" + obj.thumbnail + "'>";
+									html += "<div class='mui-media-body'>";
+									html += "<p class='mui-ellipsis'>" + obj.title + "</p>";
+									html += "</div>";
+									html += "</a>";
+									html += "</li>";
+
+								});
+								document.getElementById("table-list-content").innerHTML = html;
+
+								mui('.mui-scroll-wrapper').scroll({
+									deceleration: 0.0005 //flick 减速系数，系数越大，滚动速度越慢，滚动距离越小，默认值0.0006
+								});
+
+								//a标签跳转的地方,没成功.
+								mui('body').on('tap', 'a', function(e) {
+									document.location.href = this.href;
+								});
+
+							});
+						});
+
+
+					}
+				},
+				// 创建的时候调用方法
+				created: function() {
+					this.top_data();
+					this.middle_data();
+				}
+			});
+		</script>
+	</body>
+</html>
